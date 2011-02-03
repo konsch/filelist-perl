@@ -1,0 +1,18 @@
+===Introduction===
+
+This little script provides an easy way of getting a formatted list of files in a directory and show their sizes (in kb).
+
+===Details===
+
+- written in Perl
+- actually only runs on linux (using glob-statement)
+- controlled by command line flags
+
+===Usage===
+
+As written above, "filelist" uses command line flags.
+Possible ways to use it and corresponding outputs are:
+
+- without flags: you will be prompted to enter the dir to scan, output on screen
+- "-d [dir]": a file named "filelist.txt" will be created in your homedir, containing list of files in "[dir]"
+- "-d [dir] -o": same as with "-d [dir]", but output will be given on screen
