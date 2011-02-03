@@ -1,0 +1,114 @@
+#!/usr/bin/perl
+
+# ---------------------------------------------------------------
+# filelist.pl
+# ---------------------------------------------------------------
+#
+# Beschreibung:
+# Tool zur Auflistung von Dateien innerhalb eines Verzeichnisses
+# mitsamt Größenangabe per Direktausgabe oder Datei.
+#
+# ---------------------------------------------------------------
+#
+# Nutzungshinweise:
+# Über das Flag "-d" kann direkt über die Kommandozeile das zu
+# scannende Verzeichnis angegeben werden, die Ausgabe wird bei
+# Nutzung dieses Flags automatisch in die Datei "filelist.txt"
+# im eigenen Home-Directory gespeichert.
+#
+# ---------------------------------------------------------------
+#
+# Autor: Konstantin Meyer
+# Letzte Änderung: 02.02.2011 23:31:20 CET
+#
+# ---------------------------------------------------------------
+
+use File::stat;
+use Getopt::Std;
+
+# Flag "-d" auslesen.
+getopts("d:");
+
+# Benötigte Leervariablen deklarieren.
+my $directory;
+my $output;
+
+if(not defined $opt_d) {
+  
+    # Zu scannendes Verzeichnis abfragen und in ebendieses wechseln.
+    print "Bitte geben Sie das zu scannende Verzeichnis an: ";
+    $directory = <STDIN>;
+    chomp $directory;
+    chdir($directory);
+} else {
+  
+    # Filehandle für die Textdatei anlegen.
+    open(SAVEFILE, ">", "filelist.txt");  
+  
+    # Anhand des Wertes des Flags "-d" in entspr. Verzeichnis wechseln.
+    $directory = $opt_d;
+    chdir($directory);    
+}
+
+# Terminal leeren.
+system("clear");
+
+# Unterverzeichnisse filtern.
+my $listlength;
+foreach(glob(".* *")) {
+    if(-e $_ and not -d $_) {
+	$listlength += 1;
+    }
+}
+
+# Dateiliste ausgeben.
+if($listlength != 0) {
+    foreach(glob(".* *")) {
+
+	# Vereinfachter Aufruf des jeweiligen Schleifenelements.
+	my $filename = $_;
+    
+	# Prüfung, ob Verzeichnis. Falls ja: Weg damit!
+	if(-d($filename) or not -e($filename) or $filename eq " ") {    
+		undef($filename);
+		next;		
+	}
+    
+	# Benötigte Berechnungs- bzw. Ausgabe-Variablen deklarieren.
+	my $maxlength = 30;
+	my $length = length($filename);
+	my $file_stats = stat($filename);
+    
+	# Dateinamen-String auffüllen (Formatierung).
+	if($length < $maxlength) {
+	    my $diff = $maxlength - $length;
+	    $filename = $filename . " " x $diff;	
+	}
+    
+	# Dateigröße in Kilobyte ausrechnen.
+	my $groesse_kb = sprintf("%.1f", $file_stats->size / 1024);
+    
+	# Ausgabestring zusammenbasteln.
+	$output .= $filename . "\t Größe: " . $groesse_kb  . " Kilobyte \n";
+    }
+    
+    # Falls Flag "-d" gesetzt: In Datei schreiben. Andernfalls: Direkt ausgeben.
+    if(defined $opt_d) {
+	chdir();
+	if(print SAVEFILE $output) {
+	    print "Datei erfolgreich geschrieben! \n";
+	    exit;
+	} else {
+	    print "Datei konnte nicht geschrieben werden! \n";
+	    exit;
+	}
+	close SAVEFILE;
+    } else {
+	print "Folgende Dateien befinden sich in " . $directory . ": \n\n" . $output;
+	close SAVEFILE;
+	exit;
+    }
+} else {
+    print "Keine Dateien im Verzeichnis vorhanden! \n";
+    exit;
+}
